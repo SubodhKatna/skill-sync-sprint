@@ -30,6 +30,7 @@
         <module>auth-service</module>
         <module>user-service</module>
         <module>mentor-service</module>
+        <module>skill-service</module>
     </modules>
 
     <dependencies>

@@ -5,6 +5,8 @@ COPY discovery-server/pom.xml discovery-server/
 COPY api-gateway/pom.xml api-gateway/
 COPY auth-service/pom.xml auth-service/
 COPY user-service/pom.xml user-service/
+COPY mentor-service/pom.xml mentor-service/
+COPY skill-service/pom.xml skill-service/
 
 RUN mvn dependency:go-offline -B -T 1C
 
