@@ -6,9 +6,8 @@
 
     <parent>
         <groupId>com.skillsync</groupId>
-        <artifactId>skill-sync-backend</artifactId>
+        <artifactId>skillsync-backend</artifactId>
         <version>1.0.0</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>discovery-server</artifactId>

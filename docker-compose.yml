@@ -60,6 +60,31 @@ services:
     networks:
       - skillsync-network
 
+
+  auth-service:
+    image: eclipse-temurin:17-jre-alpine
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./auth-service/target:/app
+    command: ["sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/auth-service-1.0.0*.jar"]
+    env_file: .env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/skillsync_auth?createDatabaseIfNotExist=true
+      - EUREKA_URL=http://discovery-server:8761/eureka/
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    networks:
+      - skillsync-network
+
+
 networks:
   skillsync-network:
     driver: bridge
