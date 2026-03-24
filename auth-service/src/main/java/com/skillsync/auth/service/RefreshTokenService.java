@@ -27,6 +27,13 @@ public class RefreshTokenService {
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Create or update a refresh token for the specified user and persist it.
+     *
+     * @param userId the id of the user to associate with the refresh token
+     * @return the persisted {@code RefreshToken} containing a new token string and expiry date
+     * @throws ResourceNotFoundException if no user exists with the given id
+     */
     @Transactional
     public RefreshToken createRefreshToken(Long userId) {
         User user = userRepository.findByIdForUpdate(userId)
@@ -41,10 +48,23 @@ public class RefreshTokenService {
         return refreshTokenRepository.save(refreshToken);
     }
 
+    /**
+     * Locate a refresh token by its token string.
+     *
+     * @param token the refresh token string to look up
+     * @return an Optional containing the matching RefreshToken if present, empty otherwise
+     */
     public Optional<RefreshToken> findByToken(String token) {
         return refreshTokenRepository.findByToken(token);
     }
 
+    /**
+     * Validates that the provided refresh token is not expired.
+     *
+     * @param token the refresh token to validate
+     * @return the same `token` if it has not expired
+     * @throws BadRequestException if the token's expiry date is before the current time; the token is deleted before the exception is thrown
+     */
     public RefreshToken verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate().isBefore(Instant.now())) {
             refreshTokenRepository.delete(token);
@@ -53,6 +73,11 @@ public class RefreshTokenService {
         return token;
     }
 
+    /**
+     * Delete all refresh tokens associated with the given user.
+     *
+     * @param user the user whose refresh tokens will be removed
+     */
     @Transactional
     public void deleteByUser(User user) {
         refreshTokenRepository.deleteByUser(user);

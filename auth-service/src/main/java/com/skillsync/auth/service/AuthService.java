@@ -42,6 +42,14 @@ public class AuthService {
     @Autowired
     private RefreshTokenService refreshTokenService;
 
+    /**
+     * Create a new user account, assign or create the requested role, persist the user, and issue access and refresh tokens.
+     *
+     * @param request registration data; email and name are trimmed (email is lowercased); `role` may be null or blank to use the default role
+     * @return an AuthResponse containing the access token, the refresh token value, the user's email, and the resolved role name
+     * @throws ConflictException if a user with the normalized email already exists
+     * @throws BadRequestException if the provided role string cannot be resolved to a valid role
+     */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
@@ -73,6 +81,13 @@ public class AuthService {
         return new AuthResponse(token, refreshToken.getToken(), user.getEmail(), roleName.name());
     }
 
+    /**
+     * Authenticate the provided credentials and issue a new access token and refresh token.
+     *
+     * @param request the login request containing the user's email and password
+     * @return an AuthResponse containing the access JWT, the refresh token value, the user's email, and the resolved role name
+     * @throws ResourceNotFoundException if no user exists with the normalized email
+     */
     public AuthResponse login(LoginRequest request) {
         String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
 
@@ -94,6 +109,13 @@ public class AuthService {
         return new AuthResponse(token, refreshToken.getToken(), user.getEmail(), roleName);
     }
 
+    /**
+     * Issues a new access JWT for the user associated with the provided refresh token.
+     *
+     * @param request the request containing the refresh token string
+     * @return an AuthResponse containing the newly generated access token, the existing refresh token value, the user's email, and the user's role name
+     * @throws ResourceNotFoundException if no refresh token is found for the provided value
+     */
     public AuthResponse refreshToken(RefreshTokenRequest request) {
         RefreshToken refreshToken = refreshTokenService.findByToken(request.getRefreshToken())
                 .orElseThrow(() -> new ResourceNotFoundException("Refresh token not found"));
@@ -111,6 +133,16 @@ public class AuthService {
         return new AuthResponse(newAccessToken, refreshToken.getToken(), user.getEmail(), roleName);
     }
 
+    /**
+     * Resolve a raw role string into a Role.RoleName enum value.
+     *
+     * <p>Null or blank inputs map to ROLE_LEARNER. The input is case-insensitive and may omit the
+     * "ROLE_" prefix (e.g., "admin" or "ROLE_ADMIN" both resolve to ROLE_ADMIN).
+     *
+     * @param rawRole the raw role string to normalize and convert
+     * @return the resolved Role.RoleName
+     * @throws BadRequestException if the normalized role name does not match any Role.RoleName
+     */
     private Role.RoleName resolveRoleName(String rawRole) {
         if (rawRole == null || rawRole.isBlank()) {
             return Role.RoleName.ROLE_LEARNER;

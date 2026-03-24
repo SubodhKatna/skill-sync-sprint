@@ -15,6 +15,13 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Load user details for authentication using the provided email.
+     *
+     * @param email the user's email address used as the username for authentication
+     * @return a UserDetails populated with the user's email as username, the persisted password, and authorities derived from the user's roles
+     * @throws UsernameNotFoundException if no user is found for the given email
+     */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)

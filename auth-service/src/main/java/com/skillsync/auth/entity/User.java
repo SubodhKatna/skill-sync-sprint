@@ -39,6 +39,11 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    /**
+     * Sets the entity's createdAt timestamp to the current time before the entity is persisted.
+     *
+     * Invoked automatically as a JPA {@code @PrePersist} lifecycle callback.
+     */
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
