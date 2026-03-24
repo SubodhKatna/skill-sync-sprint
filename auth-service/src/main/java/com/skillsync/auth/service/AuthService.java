@@ -1,5 +1,6 @@
 package com.skillsync.auth.service;
 
+import com.skillsync.auth.client.UserServiceClient;
 import com.skillsync.auth.dto.*;
 import com.skillsync.auth.entity.RefreshToken;
 import com.skillsync.auth.entity.Role;
@@ -42,6 +43,9 @@ public class AuthService {
     @Autowired
     private RefreshTokenService refreshTokenService;
 
+    @Autowired
+    private UserServiceClient userServiceClient;
+
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
@@ -66,11 +70,12 @@ public class AuthService {
 
         user.setRoles(Collections.singleton(role));
         user = userRepository.save(user);
+        userServiceClient.createProfile(user);
 
         String token = jwtUtils.generateToken(user.getEmail(), roleName.name());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-        return new AuthResponse(token, refreshToken.getToken(), user.getEmail(), roleName.name());
+        return new AuthResponse(user.getId(), token, refreshToken.getToken(), user.getEmail(), roleName.name());
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -91,7 +96,7 @@ public class AuthService {
         String token = jwtUtils.generateToken(user.getEmail(), roleName);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-        return new AuthResponse(token, refreshToken.getToken(), user.getEmail(), roleName);
+        return new AuthResponse(user.getId(), token, refreshToken.getToken(), user.getEmail(), roleName);
     }
 
     public AuthResponse refreshToken(RefreshTokenRequest request) {
@@ -108,7 +113,7 @@ public class AuthService {
 
         String newAccessToken = jwtUtils.generateToken(user.getEmail(), roleName);
 
-        return new AuthResponse(newAccessToken, refreshToken.getToken(), user.getEmail(), roleName);
+        return new AuthResponse(user.getId(), newAccessToken, refreshToken.getToken(), user.getEmail(), roleName);
     }
 
     private Role.RoleName resolveRoleName(String rawRole) {

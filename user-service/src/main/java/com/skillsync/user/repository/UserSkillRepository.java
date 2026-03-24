@@ -1,0 +1,9 @@
+package com.skillsync.user.repository;
+
+import com.skillsync.user.entity.UserSkill;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
+    List<UserSkill> findByUserId(Long userId);
+}

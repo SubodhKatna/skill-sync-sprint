@@ -1,0 +1,48 @@
+package com.skillsync.user.controller;
+
+import com.skillsync.user.entity.UserProfile;
+import com.skillsync.user.entity.UserSkill;
+import com.skillsync.user.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @PostMapping
+    public ResponseEntity<UserProfile> createProfile(@RequestBody UserProfile profile) {
+        return ResponseEntity.ok(userService.createProfile(profile));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserProfile> getProfile(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getProfileById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserProfile> updateProfile(@PathVariable Long id, @RequestBody UserProfile profile) {
+        return ResponseEntity.ok(userService.updateProfile(id, profile));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<UserProfile>> getAllProfiles() {
+        return ResponseEntity.ok(userService.getAllProfiles());
+    }
+
+    @PostMapping("/{userId}/skills")
+    public ResponseEntity<UserSkill> addSkill(@PathVariable Long userId, @RequestBody UserSkill skill) {
+        return ResponseEntity.ok(userService.addSkill(userId, skill));
+    }
+
+    @GetMapping("/{userId}/skills")
+    public ResponseEntity<List<UserSkill>> getUserSkills(@PathVariable Long userId) {
+        return ResponseEntity.ok(userService.getUserSkills(userId));
+    }
+}

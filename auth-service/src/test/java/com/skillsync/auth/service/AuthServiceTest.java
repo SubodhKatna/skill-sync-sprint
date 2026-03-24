@@ -1,5 +1,6 @@
 package com.skillsync.auth.service;
 
+import com.skillsync.auth.client.UserServiceClient;
 import com.skillsync.auth.dto.AuthResponse;
 import com.skillsync.auth.dto.RegisterRequest;
 import com.skillsync.auth.entity.RefreshToken;
@@ -47,6 +48,9 @@ class AuthServiceTest {
     @Mock
     private RefreshTokenService refreshTokenService;
 
+    @Mock
+    private UserServiceClient userServiceClient;
+
     @InjectMocks
     private AuthService authService;
 
@@ -76,6 +80,7 @@ class AuthServiceTest {
         org.mockito.Mockito.verify(userRepository).save(userCaptor.capture());
         assertEquals("learner@example.com", userCaptor.getValue().getEmail());
         assertEquals("Learner", userCaptor.getValue().getName());
+        assertEquals(7L, response.getUserId());
         assertEquals("ROLE_LEARNER", response.getRole());
         assertEquals("access-token", response.getAccessToken());
     }
