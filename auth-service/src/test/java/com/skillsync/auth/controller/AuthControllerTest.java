@@ -32,13 +32,14 @@ class AuthControllerTest {
 
     @Test
     void registerReturnsAuthResponse() throws Exception {
-        AuthResponse response = new AuthResponse("access", "refresh", "learner@example.com", "ROLE_LEARNER");
+        AuthResponse response = new AuthResponse(10L, "access", "refresh", "learner@example.com", "ROLE_LEARNER");
         when(authService.register(any())).thenReturn(response);
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new RegisterPayload("Learner", "learner@example.com", "secret", "learner"))))
+                .content(objectMapper.writeValueAsString(new RegisterPayload("Learner", "learner@example.com", "secret", "learner"))))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(10))
                 .andExpect(jsonPath("$.accessToken").value("access"))
                 .andExpect(jsonPath("$.refreshToken").value("refresh"))
                 .andExpect(jsonPath("$.email").value("learner@example.com"))

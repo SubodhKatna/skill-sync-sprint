@@ -1,20 +1,4 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: skill-sync-backend-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - mysql-data:/var/lib/mysql
-      - ./init-databases.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - skillsync-network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   rabbitmq:
     image: rabbitmq:3-management
     container_name: skill-sync-backend-rabbitmq
@@ -60,6 +44,29 @@ services:
     networks:
       - skillsync-network
 
+  user-service:
+    image: eclipse-temurin:17-jre-alpine
+    container_name: user-service
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./user-service/target:/app
+    command: [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/user-service-1.0.0*.jar" ]
+    env_file: .env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/skillsync_user?createDatabaseIfNotExist=true
+      - EUREKA_URL=http://discovery-server:8761/eureka/
+      - RABBITMQ_HOST=rabbitmq
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    networks:
+      - skillsync-network
+
 
   auth-service:
     image: eclipse-temurin:17-jre-alpine
@@ -71,12 +78,13 @@ services:
     command: ["sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/auth-service-1.0.0*.jar"]
     env_file: .env
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/skillsync_auth?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/skillsync_auth?createDatabaseIfNotExist=true
       - EUREKA_URL=http://discovery-server:8761/eureka/
+      - USER_SERVICE_URL=http://user-service:8082
       - RABBITMQ_HOST=rabbitmq
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
-      mysql:
-        condition: service_healthy
       rabbitmq:
         condition: service_healthy
       discovery-server:
@@ -88,6 +96,3 @@ services:
 networks:
   skillsync-network:
     driver: bridge
-
-volumes:
-  mysql-data:
