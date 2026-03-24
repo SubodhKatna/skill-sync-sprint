@@ -114,6 +114,28 @@ services:
     networks:
       - skillsync-network
 
+  skill-service:
+    image: eclipse-temurin:17-jre-alpine
+    container_name: skill-service
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./skill-service/target:/app
+    command: [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/skill-service-1.0.0*.jar" ]
+    env_file: .env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/skillsync_skill?createDatabaseIfNotExist=true
+      - EUREKA_URL=http://discovery-server:8761/eureka/
+      - RABBITMQ_HOST=rabbitmq
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    networks:
+      - skillsync-network
 networks:
   skillsync-network:
     driver: bridge
