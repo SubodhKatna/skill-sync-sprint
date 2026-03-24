@@ -4,11 +4,10 @@ COPY pom.xml .
 COPY discovery-server/pom.xml discovery-server/
 COPY api-gateway/pom.xml api-gateway/
 COPY auth-service/pom.xml auth-service/
+COPY user-service/pom.xml user-service/
 
-# Download dependencies first
 RUN mvn dependency:go-offline -B -T 1C
 
-# Copy the rest of the source code
 COPY . .
 RUN mvn clean package -DskipTests -T 1C
 
