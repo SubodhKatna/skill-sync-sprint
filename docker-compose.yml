@@ -1,0 +1,68 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: skill-sync-backend-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - skillsync-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: skill-sync-backend-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - skillsync-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  discovery-server:
+    image: eclipse-temurin:17-jre-alpine
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    volumes:
+      - ./discovery-server/target:/app
+    command: ["sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/discovery-server-1.0.0*.jar"]
+    environment:
+      - EUREKA_CLIENT_REGISTER_WITH_EUREKA=false
+      - EUREKA_CLIENT_FETCH_REGISTRY=false
+    networks:
+      - skillsync-network
+
+  api-gateway:
+    image: eclipse-temurin:17-jre-alpine
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api-gateway/target:/app
+    command: ["sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/api-gateway-1.0.0*.jar"]
+    env_file: .env
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka/
+      - SPRING_CLOUD_GATEWAY_DISCOVERY_LOCATOR_LOWER_CASE_SERVICE_ID=true
+    depends_on:
+      - discovery-server
+    networks:
+      - skillsync-network
+
+networks:
+  skillsync-network:
+    driver: bridge
+
+volumes:
+  mysql-data:

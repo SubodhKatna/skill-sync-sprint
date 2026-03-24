@@ -1,0 +1,10 @@
+CREATE USER IF NOT EXISTS 'skillsync'@'%' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON skillsync_auth.* TO 'skillsync'@'%';
+GRANT ALL PRIVILEGES ON skillsync_user.* TO 'skillsync'@'%';
+GRANT ALL PRIVILEGES ON skillsync_skill.* TO 'skillsync'@'%';
+GRANT ALL PRIVILEGES ON skillsync_mentor.* TO 'skillsync'@'%';
+GRANT ALL PRIVILEGES ON skillsync_session.* TO 'skillsync'@'%';
+GRANT ALL PRIVILEGES ON skillsync_group.* TO 'skillsync'@'%';
+GRANT ALL PRIVILEGES ON skillsync_review.* TO 'skillsync'@'%';
+GRANT ALL PRIVILEGES ON skillsync_notification.* TO 'skillsync'@'%';
+FLUSH PRIVILEGES;
