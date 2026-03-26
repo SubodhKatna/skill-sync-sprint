@@ -31,6 +31,10 @@
         <module>user-service</module>
         <module>mentor-service</module>
         <module>skill-service</module>
+        <module>session-service</module>
+        <module>group-service</module>
+        <module>notification-service</module>
+        <module>review-service</module>
     </modules>
 
     <dependencies>

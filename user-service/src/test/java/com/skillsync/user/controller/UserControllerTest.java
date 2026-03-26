@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skillsync.user.entity.UserProfile;
 import com.skillsync.user.entity.UserSkill;
 import com.skillsync.user.service.UserService;
+import com.skillsync.user.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -48,6 +49,28 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Asha"));
+    }
+
+    @Test
+    void getProfileReturnsProfile() throws Exception {
+        UserProfile profile = new UserProfile();
+        profile.setId(1L);
+        profile.setUserId(10L);
+        profile.setName("Asha");
+
+        when(userService.getProfileById(1L)).thenReturn(profile);
+
+        mockMvc.perform(get("/users/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Asha"));
+    }
+
+    @Test
+    void getProfileReturnsNotFound() throws Exception {
+        when(userService.getProfileById(99L)).thenThrow(new ResourceNotFoundException("Profile not found"));
+
+        mockMvc.perform(get("/users/99"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

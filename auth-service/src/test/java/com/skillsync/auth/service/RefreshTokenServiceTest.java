@@ -7,6 +7,7 @@ import com.skillsync.auth.repository.RefreshTokenRepository;
 import com.skillsync.auth.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.skillsync.auth.service.impl.RefreshTokenServiceImpl;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,7 +31,7 @@ class RefreshTokenServiceTest {
     private UserRepository userRepository;
 
     @InjectMocks
-    private RefreshTokenService refreshTokenService;
+    private RefreshTokenServiceImpl refreshTokenService;
 
     @Test
     void createRefreshTokenReusesExistingTokenRow() {
