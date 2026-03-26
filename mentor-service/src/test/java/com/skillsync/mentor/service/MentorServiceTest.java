@@ -8,6 +8,7 @@ import com.skillsync.mentor.repository.MentorRepository;
 import com.skillsync.mentor.repository.MentorSkillRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.skillsync.mentor.service.impl.MentorServiceImpl;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -39,7 +40,7 @@ class MentorServiceTest {
     private RestTemplate restTemplate;
 
     @InjectMocks
-    private MentorService mentorService;
+    private MentorServiceImpl mentorService;
 
     @Test
     void applyAsMentorAddsValidatedSkills() {

@@ -5,6 +5,7 @@ import com.skillsync.skill.exception.ConflictException;
 import com.skillsync.skill.repository.SkillRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.skillsync.skill.service.impl.SkillServiceImpl;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -21,7 +22,7 @@ class SkillServiceTest {
     private SkillRepository skillRepository;
 
     @InjectMocks
-    private SkillService skillService;
+    private SkillServiceImpl skillService;
 
     @Test
     void createSkillRejectsDuplicates() {

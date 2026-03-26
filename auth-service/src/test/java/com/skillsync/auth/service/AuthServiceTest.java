@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.skillsync.auth.service.impl.AuthServiceImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -52,7 +53,7 @@ class AuthServiceTest {
     private UserServiceClient userServiceClient;
 
     @InjectMocks
-    private AuthService authService;
+    private AuthServiceImpl authService;
 
     @Test
     void registerNormalizesEmailAndUsesDefaultRole() {
