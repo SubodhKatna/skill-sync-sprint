@@ -4,6 +4,7 @@ import com.skillsync.session.dto.SessionEvent;
 import com.skillsync.session.dto.SessionRequest;
 import com.skillsync.session.dto.SessionResponse;
 import com.skillsync.session.entity.MentoringSession;
+import com.skillsync.session.exception.BadRequestException;
 import com.skillsync.session.exception.ResourceNotFoundException;
 import com.skillsync.session.repository.SessionRepository;
 import com.skillsync.session.service.SessionService;
@@ -42,13 +43,21 @@ public class SessionServiceImpl implements SessionService {
 
     private final RestTemplate restTemplate;
 
+    private static final java.util.Set<String> VALID_STATUSES =
+            java.util.Set.of("SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED");
+
     @Override
     public SessionResponse createSession(SessionRequest request) {
         log.info("Creating session between mentor {} and mentee {}", request.getMentorId(), request.getMenteeId());
 
-        // Validate Mentee
+        if (request.getEndTime() != null && request.getStartTime() != null
+                && !request.getEndTime().isAfter(request.getStartTime())) {
+            throw new BadRequestException("End time must be after start time");
+        }
+
+        // Validate Mentee by userId
         try {
-            restTemplate.getForObject(userServiceUrl + "/users/" + request.getMenteeId(), java.util.Map.class);
+            restTemplate.getForObject(userServiceUrl + "/users/by-user/" + request.getMenteeId(), java.util.Map.class);
         } catch (Exception e) {
             log.error("Mentee validation failed for userId: {}", request.getMenteeId(), e);
             throw new ResourceNotFoundException("Mentee (User) not found with id: " + request.getMenteeId());
@@ -110,10 +119,13 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     public SessionResponse updateSessionStatus(Long id, String status) {
+        if (status == null || !VALID_STATUSES.contains(status.toUpperCase())) {
+            throw new BadRequestException("Invalid status '" + status + "'. Allowed values: SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED");
+        }
         MentoringSession session = sessionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found with id: " + id));
-        
-        session.setStatus(status);
+
+        session.setStatus(status.toUpperCase());
         MentoringSession updatedSession = sessionRepository.save(session);
         
         publishSessionEvent(updatedSession);
@@ -122,9 +134,21 @@ public class SessionServiceImpl implements SessionService {
     }
 
     private void publishSessionEvent(MentoringSession session) {
+        Long mentorUserId = null;
+        try {
+            java.util.Map<?, ?> mentorData = restTemplate.getForObject(
+                    mentorServiceUrl + "/mentors/" + session.getMentorId(), java.util.Map.class);
+            if (mentorData != null && mentorData.get("userId") instanceof Number) {
+                mentorUserId = ((Number) mentorData.get("userId")).longValue();
+            }
+        } catch (Exception e) {
+            log.warn("Could not fetch mentor userId for mentorId: {}", session.getMentorId());
+        }
+
         SessionEvent event = SessionEvent.builder()
                 .sessionId(session.getId())
                 .mentorId(session.getMentorId())
+                .mentorUserId(mentorUserId)
                 .menteeId(session.getMenteeId())
                 .status(session.getStatus())
                 .build();

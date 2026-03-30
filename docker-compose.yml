@@ -255,9 +255,77 @@ services:
     networks:
       - skillsync-network
 
+  zipkin:
+    image: openzipkin/zipkin:3
+    container_name: skillsync-zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - skillsync-network
+
+  sonarqube:
+    image: sonarqube:10-community
+    container_name: skillsync-sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-logs:/opt/sonarqube/logs
+      - sonarqube-extensions:/opt/sonarqube/extensions
+    networks:
+      - skillsync-network
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: skillsync-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - skillsync-network
+    depends_on:
+      - api-gateway
+      - auth-service
+      - user-service
+      - mentor-service
+      - skill-service
+      - session-service
+      - group-service
+      - review-service
+      - notification-service
+      - discovery-server
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: skillsync-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - skillsync-network
+    depends_on:
+      - prometheus
+
 networks:
   skillsync-network:
     driver: bridge
 
 volumes:
   mysql-data:
+  grafana-data:
+  sonarqube-data:
+  sonarqube-logs:
+  sonarqube-extensions:
+

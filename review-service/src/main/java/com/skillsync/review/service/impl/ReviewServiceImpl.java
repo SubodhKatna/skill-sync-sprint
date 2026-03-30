@@ -109,9 +109,21 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private void publishReviewEvent(Review review) {
+        Long mentorUserId = null;
+        try {
+            Map<?, ?> mentorData = restTemplate.getForObject(
+                    mentorServiceUrl + "/mentors/" + review.getMentorId(), Map.class);
+            if (mentorData != null && mentorData.get("userId") instanceof Number) {
+                mentorUserId = ((Number) mentorData.get("userId")).longValue();
+            }
+        } catch (Exception e) {
+            log.warn("Could not fetch mentor userId for mentorId: {}", review.getMentorId());
+        }
+
         ReviewEvent event = ReviewEvent.builder()
                 .reviewId(review.getId())
                 .mentorId(review.getMentorId())
+                .mentorUserId(mentorUserId)
                 .reviewerId(review.getReviewerId())
                 .rating((double) review.getRating())
                 .sessionId(review.getSessionId())

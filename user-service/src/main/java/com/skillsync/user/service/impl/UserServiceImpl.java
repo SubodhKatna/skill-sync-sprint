@@ -2,6 +2,7 @@ package com.skillsync.user.service.impl;
 
 import com.skillsync.user.entity.UserProfile;
 import com.skillsync.user.entity.UserSkill;
+import com.skillsync.user.exception.BadRequestException;
 import com.skillsync.user.exception.ConflictException;
 import com.skillsync.user.exception.ResourceNotFoundException;
 import com.skillsync.user.repository.UserProfileRepository;
@@ -71,5 +72,19 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserSkill> getUserSkills(Long userId) {
         return skillRepository.findByUserId(userId);
+    }
+
+    private static final java.util.Set<String> VALID_LEVELS = java.util.Set.of("BEGINNER", "INTERMEDIATE", "ADVANCED");
+
+    @Override
+    public UserSkill updateSkillLevel(Long userId, Long skillId, String proficiencyLevel) {
+        String level = proficiencyLevel.trim().toUpperCase();
+        if (!VALID_LEVELS.contains(level)) {
+            throw new BadRequestException("Invalid proficiency level: '" + proficiencyLevel + "'. Allowed values: BEGINNER, INTERMEDIATE, ADVANCED");
+        }
+        UserSkill skill = skillRepository.findByIdAndUserId(skillId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Skill not found with id: " + skillId + " for user: " + userId));
+        skill.setProficiencyLevel(level);
+        return skillRepository.save(skill);
     }
 }

@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 public class SessionEvent {
     private Long sessionId;
     private Long mentorId;
+    private Long mentorUserId;
     private Long menteeId;
     private String status;
 }

@@ -13,4 +13,5 @@ public interface UserService {
     List<UserProfile> getAllProfiles();
     UserSkill addSkill(Long userId, UserSkill skill);
     List<UserSkill> getUserSkills(Long userId);
+    UserSkill updateSkillLevel(Long userId, Long skillId, String proficiencyLevel);
 }

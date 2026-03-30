@@ -27,7 +27,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public List<Notification> getUnreadNotifications(Long userId) {
-        return notificationRepository.findByUserIdAndReadFalse(userId);
+        return notificationRepository.findByUserIdAndIsReadFalse(userId);
     }
 
     @Override
@@ -39,7 +39,7 @@ public class NotificationServiceImpl implements NotificationService {
     public Notification markAsRead(Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found with id: " + notificationId));
-        notification.setRead(true);
+        notification.setIsRead(true);
         return notificationRepository.save(notification);
     }
 }

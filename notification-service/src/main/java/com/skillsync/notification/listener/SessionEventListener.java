@@ -21,14 +21,14 @@ public class SessionEventListener {
         String type = "SESSION_" + event.getStatus();
         String message = buildSessionMessage(event);
 
-        // Notify the mentee
+        // Notify the mentee (menteeId is auth userId)
         if (event.getMenteeId() != null) {
             notificationService.createNotification(event.getMenteeId(), type, message);
         }
 
-        // Notify the mentor
-        if (event.getMentorId() != null) {
-            notificationService.createNotification(event.getMentorId(), type, message);
+        // Notify the mentor (use mentorUserId which is auth userId)
+        if (event.getMentorUserId() != null) {
+            notificationService.createNotification(event.getMentorUserId(), type, message);
         }
     }
 

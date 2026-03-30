@@ -37,9 +37,9 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public LearningGroup createGroup(LearningGroup group) {
-        // Validate creator exists in user-service
+        // Validate creator exists in user-service by userId
         try {
-            restTemplate.getForObject(userServiceUrl + "/users/" + group.getCreatedBy(), java.util.Map.class);
+            restTemplate.getForObject(userServiceUrl + "/users/by-user/" + group.getCreatedBy(), java.util.Map.class);
         } catch (Exception e) {
             throw new ResourceNotFoundException("User not found with id: " + group.getCreatedBy());
         }
@@ -83,9 +83,9 @@ public class GroupServiceImpl implements GroupService {
             throw new BadRequestException("Group is full (max " + group.getMaxMembers() + " members)");
         }
 
-        // Validate user exists
+        // Validate user exists by userId
         try {
-            restTemplate.getForObject(userServiceUrl + "/users/" + userId, java.util.Map.class);
+            restTemplate.getForObject(userServiceUrl + "/users/by-user/" + userId, java.util.Map.class);
         } catch (Exception e) {
             throw new ResourceNotFoundException("User not found with id: " + userId);
         }
