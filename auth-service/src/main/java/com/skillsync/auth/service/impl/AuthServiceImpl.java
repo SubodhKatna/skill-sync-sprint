@@ -13,7 +13,7 @@ import com.skillsync.auth.repository.UserRepository;
 import com.skillsync.auth.security.JwtUtils;
 import com.skillsync.auth.service.AuthService;
 import com.skillsync.auth.service.RefreshTokenService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,28 +24,16 @@ import java.util.Collections;
 import java.util.Locale;
 
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private JwtUtils jwtUtils;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private RefreshTokenService refreshTokenService;
-
-    @Autowired
-    private UserServiceClient userServiceClient;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtils jwtUtils;
+    private final AuthenticationManager authenticationManager;
+    private final RefreshTokenService refreshTokenService;
+    private final UserServiceClient userServiceClient;
 
     @Override
     @Transactional
@@ -72,7 +60,9 @@ public class AuthServiceImpl implements AuthService {
 
         user.setRoles(Collections.singleton(role));
         user = userRepository.save(user);
-        userServiceClient.createProfile(user);
+
+        userServiceClient.createProfile(
+                new UserServiceClient.CreateUserProfileRequest(user.getId(), user.getName(), user.getEmail()));
 
         String token = jwtUtils.generateToken(user.getEmail(), roleName.name());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
@@ -85,8 +75,7 @@ public class AuthServiceImpl implements AuthService {
         String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
 
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, request.getPassword())
-        );
+                new UsernamePasswordAuthenticationToken(email, request.getPassword()));
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
@@ -121,17 +110,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private Role.RoleName resolveRoleName(String rawRole) {
-        if (rawRole == null || rawRole.isBlank()) {
-            return Role.RoleName.ROLE_LEARNER;
-        }
-
-        String normalizedRole = rawRole.trim().toUpperCase(Locale.ROOT);
-        if (!normalizedRole.startsWith("ROLE_")) {
-            normalizedRole = "ROLE_" + normalizedRole;
-        }
-
+        if (rawRole == null || rawRole.isBlank()) return Role.RoleName.ROLE_LEARNER;
+        String normalized = rawRole.trim().toUpperCase(Locale.ROOT);
+        if (!normalized.startsWith("ROLE_")) normalized = "ROLE_" + normalized;
         try {
-            return Role.RoleName.valueOf(normalizedRole);
+            return Role.RoleName.valueOf(normalized);
         } catch (IllegalArgumentException ex) {
             throw new BadRequestException("Invalid role: " + rawRole);
         }

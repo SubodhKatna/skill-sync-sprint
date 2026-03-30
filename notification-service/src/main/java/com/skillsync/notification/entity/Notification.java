@@ -1,17 +1,18 @@
 package com.skillsync.notification.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "notifications")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class Notification {
 
     @Id
@@ -27,10 +28,11 @@ public class Notification {
     @Column(nullable = false)
     private String message;
 
-    @Column(nullable = false)
-    private boolean read = false;
+    @Column(name = "is_read", nullable = false)
+    @JsonProperty("isRead")
+    private boolean isRead = false;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist

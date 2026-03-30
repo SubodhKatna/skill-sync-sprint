@@ -1,22 +1,24 @@
 package com.skillsync.user.service;
 
+import com.skillsync.user.dto.UserProfileResponse;
+import com.skillsync.user.dto.UserSkillResponse;
 import com.skillsync.user.entity.UserProfile;
 import com.skillsync.user.entity.UserSkill;
 import com.skillsync.user.exception.ConflictException;
 import com.skillsync.user.exception.ResourceNotFoundException;
 import com.skillsync.user.repository.UserProfileRepository;
 import com.skillsync.user.repository.UserSkillRepository;
+import com.skillsync.user.service.impl.UserServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import com.skillsync.user.service.impl.UserServiceImpl;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -51,7 +53,7 @@ class UserServiceTest {
         when(profileRepository.existsByUserId(10L)).thenReturn(false);
         when(profileRepository.save(any(UserProfile.class))).thenReturn(profile);
 
-        UserProfile saved = userService.createProfile(profile);
+        UserProfileResponse saved = userService.createProfile(profile);
         assertEquals(10L, saved.getUserId());
     }
 
@@ -59,15 +61,15 @@ class UserServiceTest {
     void getProfileByUserIdSuccess() {
         UserProfile profile = new UserProfile();
         profile.setUserId(10L);
-        when(profileRepository.findByUserId(10L)).thenReturn(java.util.Optional.of(profile));
+        when(profileRepository.findByUserId(10L)).thenReturn(Optional.of(profile));
 
-        UserProfile found = userService.getProfileByUserId(10L);
+        UserProfileResponse found = userService.getProfileByUserId(10L);
         assertEquals(10L, found.getUserId());
     }
 
     @Test
     void getProfileByUserIdNotFound() {
-        when(profileRepository.findByUserId(10L)).thenReturn(java.util.Optional.empty());
+        when(profileRepository.findByUserId(10L)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> userService.getProfileByUserId(10L));
     }
 
@@ -80,17 +82,17 @@ class UserServiceTest {
         UserProfile update = new UserProfile();
         update.setName("New Name");
 
-        when(profileRepository.findById(1L)).thenReturn(java.util.Optional.of(existing));
-        when(profileRepository.save(any(UserProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(profileRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(profileRepository.save(any(UserProfile.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        UserProfile updated = userService.updateProfile(1L, update);
+        UserProfileResponse updated = userService.updateProfile(1L, update);
         assertEquals("New Name", updated.getName());
     }
 
     @Test
     void getAllProfilesReturnsList() {
         when(profileRepository.findAll()).thenReturn(List.of(new UserProfile(), new UserProfile()));
-        List<UserProfile> profiles = userService.getAllProfiles();
+        List<UserProfileResponse> profiles = userService.getAllProfiles();
         assertEquals(2, profiles.size());
     }
 
@@ -98,9 +100,9 @@ class UserServiceTest {
     void addSkillAssignsUserId() {
         UserSkill skill = new UserSkill();
         skill.setSkillName("Java");
-        when(skillRepository.save(any(UserSkill.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(skillRepository.save(any(UserSkill.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        UserSkill saved = userService.addSkill(12L, skill);
+        UserSkillResponse saved = userService.addSkill(12L, skill);
 
         assertEquals(12L, saved.getUserId());
         assertEquals("Java", saved.getSkillName());

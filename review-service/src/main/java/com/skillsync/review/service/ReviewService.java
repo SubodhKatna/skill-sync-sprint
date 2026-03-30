@@ -1,12 +1,12 @@
 package com.skillsync.review.service;
 
 import com.skillsync.review.dto.ReviewRequest;
-import com.skillsync.review.entity.Review;
+import com.skillsync.review.dto.ReviewResponse;
 
 import java.util.List;
 
 public interface ReviewService {
-    Review createReview(ReviewRequest request);
-    List<Review> getReviewsByMentorId(Long mentorId);
-    Review getReviewById(Long id);
+    ReviewResponse createReview(ReviewRequest request);
+    List<ReviewResponse> getReviewsByMentorId(Long mentorId);
+    ReviewResponse getReviewById(Long id);
 }

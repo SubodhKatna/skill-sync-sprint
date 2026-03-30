@@ -1,25 +1,35 @@
 package com.skillsync.skill.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.skillsync.skill.dto.CreateSkillRequest;
+import com.skillsync.skill.dto.SkillResponse;
 import com.skillsync.skill.entity.Skill;
+import com.skillsync.skill.security.AuthEntryPoint;
+import com.skillsync.skill.security.CustomAccessDeniedHandler;
+import com.skillsync.skill.security.JwtAuthFilter;
+import com.skillsync.skill.security.SecurityConfig;
 import com.skillsync.skill.service.SkillService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SkillController.class)
+@Import(SecurityConfig.class)
 class SkillControllerTest {
 
     @Autowired
@@ -31,24 +41,54 @@ class SkillControllerTest {
     @MockBean
     private SkillService skillService;
 
+    @MockBean
+    private JwtAuthFilter jwtAuthFilter;
+
+    @MockBean
+    private AuthEntryPoint authEntryPoint;
+
+    @MockBean
+    private CustomAccessDeniedHandler accessDeniedHandler;
+
     @Test
+    @WithMockUser(authorities = "ROLE_ADMIN")
     void createSkillReturnsSavedSkill() throws Exception {
+        CreateSkillRequest request = new CreateSkillRequest();
+        request.setName("Java");
+        request.setCategory("Programming");
+        request.setDescription("Core Java");
+
         Skill skill = new Skill(1L, "Java", "Programming", "Core Java");
-        when(skillService.createSkill(any(Skill.class))).thenReturn(skill);
+        when(skillService.createSkill(any(Skill.class))).thenReturn(new SkillResponse(skill));
 
         mockMvc.perform(post("/skills")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(skill)))
-                .andExpect(status().isOk())
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Java"));
     }
 
     @Test
     void getAllSkillsReturnsList() throws Exception {
-        when(skillService.getAllSkills()).thenReturn(List.of(new Skill(1L, "Java", "Programming", "Core Java")));
+        Skill skill = new Skill(1L, "Java", "Programming", "Core Java");
+        when(skillService.getAllSkills()).thenReturn(List.of(new SkillResponse(skill)));
 
         mockMvc.perform(get("/skills"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].category").value("Programming"));
+    }
+
+    @Test
+    @WithMockUser
+    void createSkillForbiddenForNonAdmin() throws Exception {
+        CreateSkillRequest request = new CreateSkillRequest();
+        request.setName("Java");
+
+        mockMvc.perform(post("/skills")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
     }
 }

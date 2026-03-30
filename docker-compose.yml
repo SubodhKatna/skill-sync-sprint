@@ -44,6 +44,37 @@ services:
       - EUREKA_CLIENT_FETCH_REGISTRY=false
     networks:
       - skillsync-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  config-server:
+    image: eclipse-temurin:17-jre-alpine
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config-server/target:/app
+      - ~/.ssh:/root/.ssh:ro
+    command: [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/config-server-1.0.0*.jar" ]
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka/
+      - CONFIG_GIT_URI=${CONFIG_GIT_URI:-git@github.com:SubodhKatna/skillsync-confi.git}
+      - CONFIG_GIT_BRANCH=${CONFIG_GIT_BRANCH:-main}
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - skillsync-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
 
   api-gateway:
     image: eclipse-temurin:17-jre-alpine
@@ -57,31 +88,10 @@ services:
     environment:
       - EUREKA_URL=http://discovery-server:8761/eureka/
       - SPRING_CLOUD_GATEWAY_DISCOVERY_LOCATOR_LOWER_CASE_SERVICE_ID=true
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
     depends_on:
-      - discovery-server
-    networks:
-      - skillsync-network
-
-  user-service:
-    image: eclipse-temurin:17-jre-alpine
-    container_name: user-service
-    ports:
-      - "8082:8082"
-    volumes:
-      - ./user-service/target:/app
-    command: [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/user-service-1.0.0*.jar" ]
-    env_file: .env
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/skillsync_user?createDatabaseIfNotExist=true
-      - EUREKA_URL=http://discovery-server:8761/eureka/
-      - RABBITMQ_HOST=rabbitmq
-    depends_on:
-      mysql:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
       discovery-server:
-        condition: service_started
+        condition: service_healthy
     networks:
       - skillsync-network
 
@@ -95,6 +105,7 @@ services:
     command: [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/auth-service-1.0.0*.jar" ]
     env_file: .env
     environment:
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/skillsync_auth?createDatabaseIfNotExist=true
       - EUREKA_URL=http://discovery-server:8761/eureka/
       - USER_SERVICE_URL=http://user-service:8082
@@ -105,7 +116,31 @@ services:
       rabbitmq:
         condition: service_healthy
       discovery-server:
-        condition: service_started
+        condition: service_healthy
+    networks:
+      - skillsync-network
+
+  user-service:
+    image: eclipse-temurin:17-jre-alpine
+    container_name: user-service
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./user-service/target:/app
+    command: [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/user-service-1.0.0*.jar" ]
+    env_file: .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/skillsync_user?createDatabaseIfNotExist=true
+      - EUREKA_URL=http://discovery-server:8761/eureka/
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
     networks:
       - skillsync-network
 
@@ -119,6 +154,7 @@ services:
     command: [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/mentor-service-1.0.0*.jar" ]
     env_file: .env
     environment:
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/skillsync_mentor?createDatabaseIfNotExist=true
       - EUREKA_URL=http://discovery-server:8761/eureka/
       - RABBITMQ_HOST=rabbitmq
@@ -128,7 +164,7 @@ services:
       rabbitmq:
         condition: service_healthy
       discovery-server:
-        condition: service_started
+        condition: service_healthy
     networks:
       - skillsync-network
 
@@ -142,6 +178,7 @@ services:
     command: [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/skill-service-1.0.0*.jar" ]
     env_file: .env
     environment:
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/skillsync_skill?createDatabaseIfNotExist=true
       - EUREKA_URL=http://discovery-server:8761/eureka/
       - RABBITMQ_HOST=rabbitmq
@@ -151,7 +188,7 @@ services:
       rabbitmq:
         condition: service_healthy
       discovery-server:
-        condition: service_started
+        condition: service_healthy
     networks:
       - skillsync-network
 
@@ -165,6 +202,7 @@ services:
     command: [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/session-service-1.0.0*.jar" ]
     env_file: .env
     environment:
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/skillsync_session?createDatabaseIfNotExist=true
       - EUREKA_URL=http://discovery-server:8761/eureka/
       - USER_SERVICE_URL=http://user-service:8082
@@ -177,10 +215,9 @@ services:
       rabbitmq:
         condition: service_healthy
       discovery-server:
-        condition: service_started
+        condition: service_healthy
     networks:
       - skillsync-network
-
 
   group-service:
     image: eclipse-temurin:17-jre-alpine
@@ -192,6 +229,7 @@ services:
     command: [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/group-service-1.0.0*.jar" ]
     env_file: .env
     environment:
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/skillsync_group?createDatabaseIfNotExist=true
       - EUREKA_URL=http://discovery-server:8761/eureka/
       - USER_SERVICE_URL=http://user-service:8082
@@ -203,7 +241,7 @@ services:
       rabbitmq:
         condition: service_healthy
       discovery-server:
-        condition: service_started
+        condition: service_healthy
     networks:
       - skillsync-network
 
@@ -217,6 +255,7 @@ services:
     command: [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/review-service-1.0.0*.jar" ]
     env_file: .env
     environment:
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/skillsync_review?createDatabaseIfNotExist=true
       - EUREKA_URL=http://discovery-server:8761/eureka/
       - SESSION_SERVICE_URL=http://session-service:8085
@@ -228,7 +267,7 @@ services:
       rabbitmq:
         condition: service_healthy
       discovery-server:
-        condition: service_started
+        condition: service_healthy
     networks:
       - skillsync-network
 
@@ -242,18 +281,83 @@ services:
     command: [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app/notification-service-1.0.0*.jar" ]
     env_file: .env
     environment:
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/skillsync_notification?createDatabaseIfNotExist=true
       - EUREKA_URL=http://discovery-server:8761/eureka/
       - RABBITMQ_HOST=rabbitmq
+      - CONFIG_SERVER_URL=http://config-server:8888
     depends_on:
       mysql:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
       discovery-server:
-        condition: service_started
+        condition: service_healthy
     networks:
       - skillsync-network
+
+  zipkin:
+    image: openzipkin/zipkin:3
+    container_name: skillsync-zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - skillsync-network
+
+  sonarqube:
+    image: sonarqube:10-community
+    container_name: skillsync-sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-logs:/opt/sonarqube/logs
+      - sonarqube-extensions:/opt/sonarqube/extensions
+    networks:
+      - skillsync-network
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: skillsync-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - skillsync-network
+    depends_on:
+      - api-gateway
+      - auth-service
+      - user-service
+      - mentor-service
+      - skill-service
+      - session-service
+      - group-service
+      - review-service
+      - notification-service
+      - discovery-server
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: skillsync-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - skillsync-network
+    depends_on:
+      - prometheus
 
 networks:
   skillsync-network:
@@ -261,3 +365,7 @@ networks:
 
 volumes:
   mysql-data:
+  grafana-data:
+  sonarqube-data:
+  sonarqube-logs:
+  sonarqube-extensions:

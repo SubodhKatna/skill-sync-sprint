@@ -1,12 +1,13 @@
 package com.skillsync.notification.service;
 
-import com.skillsync.notification.entity.Notification;
+import com.skillsync.notification.dto.NotificationResponse;
 
 import java.util.List;
 
 public interface NotificationService {
-    Notification createNotification(Long userId, String type, String message);
-    List<Notification> getUnreadNotifications(Long userId);
-    List<Notification> getAllNotifications(Long userId);
-    Notification markAsRead(Long notificationId);
+    NotificationResponse createNotification(Long userId, String type, String message);
+    NotificationResponse createNotificationWithEmail(Long userId, String type, String message, String toEmail);
+    List<NotificationResponse> getUnreadNotifications(Long userId);
+    List<NotificationResponse> getAllNotifications(Long userId);
+    NotificationResponse markAsRead(Long notificationId);
 }
