@@ -3,12 +3,16 @@ package com.skillsync.group.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skillsync.group.entity.GroupMember;
 import com.skillsync.group.entity.LearningGroup;
+import com.skillsync.group.security.JwtAuthFilter;
+import com.skillsync.group.security.SecurityConfig;
 import com.skillsync.group.service.GroupService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -18,12 +22,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(GroupController.class)
+@Import(SecurityConfig.class)
 class GroupControllerTest {
 
     @Autowired
@@ -35,7 +41,11 @@ class GroupControllerTest {
     @MockBean
     private GroupService groupService;
 
+    @MockBean
+    private JwtAuthFilter jwtAuthFilter;
+
     @Test
+    @WithMockUser
     void createGroupReturnsSavedGroup() throws Exception {
         LearningGroup group = new LearningGroup();
         group.setId(1L);
@@ -45,6 +55,7 @@ class GroupControllerTest {
         when(groupService.createGroup(any(LearningGroup.class))).thenReturn(group);
 
         mockMvc.perform(post("/groups")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(group)))
                 .andExpect(status().isOk())
@@ -52,6 +63,7 @@ class GroupControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getMembersReturnsList() throws Exception {
         GroupMember member = new GroupMember();
         member.setUserId(7L);
@@ -63,10 +75,12 @@ class GroupControllerTest {
     }
 
     @Test
+    @WithMockUser
     void leaveGroupReturnsOk() throws Exception {
         doNothing().when(groupService).leaveGroup(eq(5L), eq(11L));
 
         mockMvc.perform(post("/groups/5/leave")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("userId", 11L))))
                 .andExpect(status().isOk());

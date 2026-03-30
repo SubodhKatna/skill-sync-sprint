@@ -3,24 +3,30 @@ package com.skillsync.session.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skillsync.session.dto.SessionRequest;
 import com.skillsync.session.dto.SessionResponse;
+import com.skillsync.session.security.JwtAuthFilter;
+import com.skillsync.session.security.SecurityConfig;
 import com.skillsync.session.service.SessionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SessionController.class)
+@Import(SecurityConfig.class)
 class SessionControllerTest {
 
     @Autowired
@@ -32,7 +38,11 @@ class SessionControllerTest {
     @MockBean
     private SessionService sessionService;
 
+    @MockBean
+    private JwtAuthFilter jwtAuthFilter;
+
     @Test
+    @WithMockUser
     void createSessionReturnsSavedSession() throws Exception {
         SessionRequest request = new SessionRequest();
         request.setMentorId(2L);
@@ -54,6 +64,7 @@ class SessionControllerTest {
         when(sessionService.createSession(any(SessionRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/sessions")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -61,6 +72,7 @@ class SessionControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getSessionByIdReturnsResponse() throws Exception {
         SessionResponse response = SessionResponse.builder()
                 .id(8L)

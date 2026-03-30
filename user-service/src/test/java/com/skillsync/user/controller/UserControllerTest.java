@@ -3,25 +3,31 @@ package com.skillsync.user.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skillsync.user.entity.UserProfile;
 import com.skillsync.user.entity.UserSkill;
-import com.skillsync.user.service.UserService;
 import com.skillsync.user.exception.ResourceNotFoundException;
+import com.skillsync.user.security.JwtAuthFilter;
+import com.skillsync.user.security.SecurityConfig;
+import com.skillsync.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
+@Import(SecurityConfig.class)
 class UserControllerTest {
 
     @Autowired
@@ -33,7 +39,12 @@ class UserControllerTest {
     @MockBean
     private UserService userService;
 
+    // JwtAuthFilter is a @Component — mock it so SecurityConfig can wire it without needing jwt.secret
+    @MockBean
+    private JwtAuthFilter jwtAuthFilter;
+
     @Test
+    @WithMockUser
     void createProfileReturnsSavedProfile() throws Exception {
         UserProfile profile = new UserProfile();
         profile.setId(1L);
@@ -44,6 +55,7 @@ class UserControllerTest {
         when(userService.createProfile(any(UserProfile.class))).thenReturn(profile);
 
         mockMvc.perform(post("/users")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(profile)))
                 .andExpect(status().isOk())
@@ -52,6 +64,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getProfileReturnsProfile() throws Exception {
         UserProfile profile = new UserProfile();
         profile.setId(1L);
@@ -66,6 +79,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getProfileReturnsNotFound() throws Exception {
         when(userService.getProfileById(99L)).thenThrow(new ResourceNotFoundException("Profile not found"));
 
@@ -74,6 +88,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getUserSkillsReturnsSkillList() throws Exception {
         UserSkill skill = new UserSkill();
         skill.setId(5L);
