@@ -22,8 +22,11 @@ import java.util.List;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+    private final SecretKey signingKey;
+
+    public JwtAuthFilter(@Value("${jwt.secret}") String jwtSecret) {
+        this.signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -32,8 +35,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             try {
                 String token = header.substring(7);
-                SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-                Claims claims = Jwts.parser().verifyWith(key).build()
+                Claims claims = Jwts.parser().verifyWith(signingKey).build()
                         .parseSignedClaims(token).getPayload();
                 String email = claims.getSubject();
                 String role = claims.get("role", String.class);

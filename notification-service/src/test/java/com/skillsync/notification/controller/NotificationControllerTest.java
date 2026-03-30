@@ -1,6 +1,9 @@
 package com.skillsync.notification.controller;
 
+import com.skillsync.notification.dto.NotificationResponse;
 import com.skillsync.notification.entity.Notification;
+import com.skillsync.notification.security.AuthEntryPoint;
+import com.skillsync.notification.security.CustomAccessDeniedHandler;
 import com.skillsync.notification.security.JwtAuthFilter;
 import com.skillsync.notification.security.SecurityConfig;
 import com.skillsync.notification.service.NotificationService;
@@ -34,16 +37,23 @@ class NotificationControllerTest {
     @MockBean
     private JwtAuthFilter jwtAuthFilter;
 
+    @MockBean
+    private AuthEntryPoint authEntryPoint;
+
+    @MockBean
+    private CustomAccessDeniedHandler accessDeniedHandler;
+
     @Test
     @WithMockUser
     void getUnreadNotificationsReturnsList() throws Exception {
-        Notification notification = new Notification();
-        notification.setId(5L);
-        notification.setUserId(2L);
-        notification.setMessage("Session booked");
-        notification.setType("SESSION_SCHEDULED");
+        Notification n = new Notification();
+        n.setId(5L);
+        n.setUserId(2L);
+        n.setMessage("Session booked");
+        n.setType("SESSION_SCHEDULED");
 
-        when(notificationService.getUnreadNotifications(2L)).thenReturn(List.of(notification));
+        when(notificationService.getUnreadNotifications(2L))
+                .thenReturn(List.of(new NotificationResponse(n)));
 
         mockMvc.perform(get("/notifications/user/2/unread"))
                 .andExpect(status().isOk())
@@ -53,11 +63,12 @@ class NotificationControllerTest {
     @Test
     @WithMockUser
     void markAsReadReturnsNotification() throws Exception {
-        Notification notification = new Notification();
-        notification.setId(5L);
-        notification.setIsRead(true);
+        Notification n = new Notification();
+        n.setId(5L);
+        n.setRead(true);
 
-        when(notificationService.markAsRead(5L)).thenReturn(notification);
+        when(notificationService.markAsRead(5L))
+                .thenReturn(new NotificationResponse(n));
 
         mockMvc.perform(put("/notifications/5/read").with(csrf()))
                 .andExpect(status().isOk())

@@ -20,7 +20,6 @@ public class ReviewEventListener {
 
         String message = "You received a new review (rating: " + event.getRating() + "/5) for session #" + event.getSessionId();
 
-        // Notify the mentor using their auth userId
         if (event.getMentorUserId() != null) {
             notificationService.createNotification(event.getMentorUserId(), "REVIEW_RECEIVED", message);
         }

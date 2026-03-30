@@ -1,45 +1,59 @@
 package com.skillsync.notification.service.impl;
 
+import com.skillsync.notification.dto.NotificationResponse;
 import com.skillsync.notification.entity.Notification;
 import com.skillsync.notification.exception.ResourceNotFoundException;
 import com.skillsync.notification.repository.NotificationRepository;
+import com.skillsync.notification.service.EmailService;
 import com.skillsync.notification.service.NotificationService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class NotificationServiceImpl implements NotificationService {
 
-    @Autowired
-    private NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
+    private final EmailService emailService;
 
     @Override
-    public Notification createNotification(Long userId, String type, String message) {
+    public NotificationResponse createNotification(Long userId, String type, String message) {
         Notification notification = new Notification();
         notification.setUserId(userId);
         notification.setType(type);
         notification.setMessage(message);
         notification.setRead(false);
-        return notificationRepository.save(notification);
+        return new NotificationResponse(notificationRepository.save(notification));
     }
 
     @Override
-    public List<Notification> getUnreadNotifications(Long userId) {
-        return notificationRepository.findByUserIdAndIsReadFalse(userId);
+    public NotificationResponse createNotificationWithEmail(Long userId, String type, String message, String toEmail) {
+        NotificationResponse response = createNotification(userId, type, message);
+        emailService.sendNotificationEmail(toEmail, "[SkillSync] " + type.replace("_", " "), message);
+        return response;
     }
 
     @Override
-    public List<Notification> getAllNotifications(Long userId) {
-        return notificationRepository.findByUserId(userId);
+    public List<NotificationResponse> getUnreadNotifications(Long userId) {
+        return notificationRepository.findByUserIdAndIsReadFalse(userId)
+                .stream().map(NotificationResponse::new).toList();
     }
 
     @Override
-    public Notification markAsRead(Long notificationId) {
+    public List<NotificationResponse> getAllNotifications(Long userId) {
+        return notificationRepository.findByUserId(userId)
+                .stream().map(NotificationResponse::new).toList();
+    }
+
+    @Override
+    public NotificationResponse markAsRead(Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found with id: " + notificationId));
-        notification.setIsRead(true);
-        return notificationRepository.save(notification);
+        notification.setRead(true);
+        return new NotificationResponse(notificationRepository.save(notification));
     }
 }

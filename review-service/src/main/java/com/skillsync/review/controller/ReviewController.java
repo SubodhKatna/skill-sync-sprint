@@ -1,7 +1,7 @@
 package com.skillsync.review.controller;
 
 import com.skillsync.review.dto.ReviewRequest;
-import com.skillsync.review.entity.Review;
+import com.skillsync.review.dto.ReviewResponse;
 import com.skillsync.review.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,17 +19,17 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @PostMapping
-    public ResponseEntity<Review> createReview(@Valid @RequestBody ReviewRequest request) {
+    public ResponseEntity<ReviewResponse> createReview(@Valid @RequestBody ReviewRequest request) {
         return new ResponseEntity<>(reviewService.createReview(request), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Review> getReviewById(@PathVariable Long id) {
+    public ResponseEntity<ReviewResponse> getReviewById(@PathVariable Long id) {
         return ResponseEntity.ok(reviewService.getReviewById(id));
     }
 
     @GetMapping("/mentor/{mentorId}")
-    public ResponseEntity<List<Review>> getReviewsByMentorId(@PathVariable Long mentorId) {
+    public ResponseEntity<List<ReviewResponse>> getReviewsByMentorId(@PathVariable Long mentorId) {
         return ResponseEntity.ok(reviewService.getReviewsByMentorId(mentorId));
     }
 }

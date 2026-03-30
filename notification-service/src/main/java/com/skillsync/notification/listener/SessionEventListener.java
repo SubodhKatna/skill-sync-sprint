@@ -21,12 +21,10 @@ public class SessionEventListener {
         String type = "SESSION_" + event.getStatus();
         String message = buildSessionMessage(event);
 
-        // Notify the mentee (menteeId is auth userId)
         if (event.getMenteeId() != null) {
             notificationService.createNotification(event.getMenteeId(), type, message);
         }
 
-        // Notify the mentor (use mentorUserId which is auth userId)
         if (event.getMentorUserId() != null) {
             notificationService.createNotification(event.getMentorUserId(), type, message);
         }
@@ -35,8 +33,8 @@ public class SessionEventListener {
     private String buildSessionMessage(SessionEvent event) {
         return switch (event.getStatus()) {
             case "SCHEDULED" -> "Session #" + event.getSessionId() + " has been scheduled.";
-            case "CANCELLED" -> "Session #" + event.getSessionId() + " has been cancelled.";
-            case "COMPLETED" -> "Session #" + event.getSessionId() + " has been completed.";
+            case "CANCELLED"  -> "Session #" + event.getSessionId() + " has been cancelled.";
+            case "COMPLETED"  -> "Session #" + event.getSessionId() + " has been completed.";
             default -> "Session #" + event.getSessionId() + " status updated to: " + event.getStatus();
         };
     }

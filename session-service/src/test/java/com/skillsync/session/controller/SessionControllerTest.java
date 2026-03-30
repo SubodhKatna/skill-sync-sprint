@@ -41,6 +41,12 @@ class SessionControllerTest {
     @MockBean
     private JwtAuthFilter jwtAuthFilter;
 
+    @MockBean
+    private com.skillsync.session.security.AuthEntryPoint authEntryPoint;
+
+    @MockBean
+    private com.skillsync.session.security.CustomAccessDeniedHandler accessDeniedHandler;
+
     @Test
     @WithMockUser
     void createSessionReturnsSavedSession() throws Exception {

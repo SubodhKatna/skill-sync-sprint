@@ -1,16 +1,17 @@
 package com.skillsync.group.service;
 
-import com.skillsync.group.entity.GroupMember;
-import com.skillsync.group.entity.LearningGroup;
+import com.skillsync.group.dto.CreateGroupRequest;
+import com.skillsync.group.dto.GroupMemberResponse;
+import com.skillsync.group.dto.GroupResponse;
 
 import java.util.List;
 
 public interface GroupService {
-    LearningGroup createGroup(LearningGroup group);
+    GroupResponse createGroup(CreateGroupRequest request);
     void joinGroup(Long groupId, Long userId);
     void leaveGroup(Long groupId, Long userId);
-    List<GroupMember> getGroupMembers(Long groupId);
-    List<LearningGroup> getGroupsBySkillId(Long skillId);
-    List<LearningGroup> getAllGroups();
-    LearningGroup getGroupById(Long id);
+    List<GroupMemberResponse> getGroupMembers(Long groupId);
+    List<GroupResponse> getGroupsBySkillId(Long skillId);
+    List<GroupResponse> getAllGroups();
+    GroupResponse getGroupById(Long id);
 }

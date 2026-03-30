@@ -22,35 +22,32 @@ import java.util.List;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+    private final SecretKey signingKey;
+
+    public JwtAuthFilter(@Value("${jwt.secret}") String jwtSecret) {
+        this.signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             try {
                 String token = header.substring(7);
-                SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-                Claims claims = Jwts.parser().verifyWith(key).build()
+                Claims claims = Jwts.parser().verifyWith(signingKey).build()
                         .parseSignedClaims(token).getPayload();
-
                 String email = claims.getSubject();
                 String role = claims.get("role", String.class);
-
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        email, null, List.of(new SimpleGrantedAuthority(role))
-                );
+                        email, null, List.of(new SimpleGrantedAuthority(role)));
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (Exception e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json");
                 response.getOutputStream().print(
                     "{\"status\":401,\"error\":\"Unauthorized\",\"errorCode\":\"INVALID_TOKEN\"," +
-                    "\"message\":\"Invalid or expired token.\",\"validationErrors\":[]}"
-                );
+                    "\"message\":\"Invalid or expired token.\",\"validationErrors\":[]}");
                 return;
             }
         }

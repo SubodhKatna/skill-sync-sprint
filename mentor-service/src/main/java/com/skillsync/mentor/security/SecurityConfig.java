@@ -1,6 +1,6 @@
 package com.skillsync.mentor.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,11 +12,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Autowired private JwtAuthFilter jwtAuthFilter;
-    @Autowired private AuthEntryPoint authEntryPoint;
-    @Autowired private CustomAccessDeniedHandler accessDeniedHandler;
+    private final JwtAuthFilter jwtAuthFilter;
+    private final AuthEntryPoint authEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -27,7 +28,7 @@ public class SecurityConfig {
                 .authenticationEntryPoint(authEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/actuator/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/mentors", "/mentors/**").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/mentors/*/approve", "/mentors/*/reject").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated())

@@ -2,7 +2,11 @@ package com.skillsync.mentor.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skillsync.mentor.dto.MentorApplicationRequest;
+import com.skillsync.mentor.dto.MentorResponse;
+import com.skillsync.mentor.dto.UpdateRatingRequest;
 import com.skillsync.mentor.entity.Mentor;
+import com.skillsync.mentor.security.AuthEntryPoint;
+import com.skillsync.mentor.security.CustomAccessDeniedHandler;
 import com.skillsync.mentor.security.JwtAuthFilter;
 import com.skillsync.mentor.security.SecurityConfig;
 import com.skillsync.mentor.service.MentorService;
@@ -16,7 +20,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -44,6 +47,12 @@ class MentorControllerTest {
     @MockBean
     private JwtAuthFilter jwtAuthFilter;
 
+    @MockBean
+    private AuthEntryPoint authEntryPoint;
+
+    @MockBean
+    private CustomAccessDeniedHandler accessDeniedHandler;
+
     @Test
     @WithMockUser
     void applyAsMentorReturnsMentor() throws Exception {
@@ -58,27 +67,29 @@ class MentorControllerTest {
         request.setExperienceYears(4);
         request.setSkillIds(List.of(1L, 2L));
 
-        when(mentorService.applyAsMentor(any(MentorApplicationRequest.class))).thenReturn(mentor);
+        when(mentorService.applyAsMentor(any(MentorApplicationRequest.class)))
+                .thenReturn(new MentorResponse(mentor));
 
         mockMvc.perform(post("/mentors/apply")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Priya"));
     }
 
     @Test
     @WithMockUser
     void updateRatingRejectsMissingValues() throws Exception {
-        doNothing().when(mentorService).updateRating(any(), any(), any());
+        UpdateRatingRequest request = new UpdateRatingRequest();
+        request.setRating(4.5);
+        // totalReviews intentionally omitted to trigger validation error
 
         mockMvc.perform(put("/mentors/2/rating")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("rating", 4.5))))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400));
+                        .content("{\"rating\":4.5}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -87,7 +98,8 @@ class MentorControllerTest {
         Mentor mentor = new Mentor();
         mentor.setId(2L);
         mentor.setName("Priya");
-        when(mentorService.getAllMentors()).thenReturn(List.of(mentor));
+
+        when(mentorService.getAllMentors()).thenReturn(List.of(new MentorResponse(mentor)));
 
         mockMvc.perform(get("/mentors"))
                 .andExpect(status().isOk())
@@ -100,7 +112,8 @@ class MentorControllerTest {
         Mentor mentor = new Mentor();
         mentor.setId(2L);
         mentor.setStatus(Mentor.MentorStatus.APPROVED);
-        when(mentorService.approveMentor(2L)).thenReturn(mentor);
+
+        when(mentorService.approveMentor(2L)).thenReturn(new MentorResponse(mentor));
 
         mockMvc.perform(put("/mentors/2/approve").with(csrf()))
                 .andExpect(status().isOk())

@@ -15,20 +15,24 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    @Value("${rabbitmq.queue.session}")
-    private String sessionQueue;
+    private final String sessionQueue;
+    private final String reviewQueue;
+    private final String exchange;
+    private final String sessionRoutingKey;
+    private final String reviewRoutingKey;
 
-    @Value("${rabbitmq.queue.review}")
-    private String reviewQueue;
-
-    @Value("${rabbitmq.exchange}")
-    private String exchange;
-
-    @Value("${rabbitmq.routingkey.session}")
-    private String sessionRoutingKey;
-
-    @Value("${rabbitmq.routingkey.review}")
-    private String reviewRoutingKey;
+    public RabbitMQConfig(
+            @Value("${rabbitmq.queue.session}") String sessionQueue,
+            @Value("${rabbitmq.queue.review}") String reviewQueue,
+            @Value("${rabbitmq.exchange}") String exchange,
+            @Value("${rabbitmq.routingkey.session}") String sessionRoutingKey,
+            @Value("${rabbitmq.routingkey.review}") String reviewRoutingKey) {
+        this.sessionQueue = sessionQueue;
+        this.reviewQueue = reviewQueue;
+        this.exchange = exchange;
+        this.sessionRoutingKey = sessionRoutingKey;
+        this.reviewRoutingKey = reviewRoutingKey;
+    }
 
     @Bean
     public Queue sessionQueue() {
