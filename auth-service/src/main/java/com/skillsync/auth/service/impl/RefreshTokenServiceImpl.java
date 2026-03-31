@@ -7,7 +7,6 @@ import com.skillsync.auth.exception.ResourceNotFoundException;
 import com.skillsync.auth.repository.RefreshTokenRepository;
 import com.skillsync.auth.repository.UserRepository;
 import com.skillsync.auth.service.RefreshTokenService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,14 +18,21 @@ import java.util.UUID;
 @Service
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
-    @Value("${jwt.refresh-expiration}")
-    private long refreshTokenExpiration;
+    private final long refreshTokenExpiration;
 
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
+    public RefreshTokenServiceImpl(
+            @Value("${jwt.refresh-expiration}") long refreshTokenExpiration,
+            RefreshTokenRepository refreshTokenRepository,
+            UserRepository userRepository
+    ) {
+        this.refreshTokenExpiration = refreshTokenExpiration;
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.userRepository = userRepository;
+    }
 
     @Override
     @Transactional
