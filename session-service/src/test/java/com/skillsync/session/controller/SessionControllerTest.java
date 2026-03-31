@@ -3,7 +3,6 @@ package com.skillsync.session.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skillsync.session.dto.SessionRequest;
 import com.skillsync.session.dto.SessionResponse;
-import com.skillsync.session.security.JwtAuthFilter;
 import com.skillsync.session.security.SecurityConfig;
 import com.skillsync.session.service.SessionService;
 import org.junit.jupiter.api.Test;
@@ -13,6 +12,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -27,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(SessionController.class)
 @Import(SecurityConfig.class)
+@TestPropertySource(properties = "jwt.secret=01234567890123456789012345678901")
 class SessionControllerTest {
 
     @Autowired
@@ -37,9 +38,6 @@ class SessionControllerTest {
 
     @MockBean
     private SessionService sessionService;
-
-    @MockBean
-    private JwtAuthFilter jwtAuthFilter;
 
     @MockBean
     private com.skillsync.session.security.AuthEntryPoint authEntryPoint;

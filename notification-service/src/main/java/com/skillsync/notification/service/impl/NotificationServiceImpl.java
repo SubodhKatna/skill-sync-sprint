@@ -2,6 +2,7 @@ package com.skillsync.notification.service.impl;
 
 import com.skillsync.notification.dto.NotificationResponse;
 import com.skillsync.notification.entity.Notification;
+import com.skillsync.notification.exception.NotificationAlreadyReadException;
 import com.skillsync.notification.exception.ResourceNotFoundException;
 import com.skillsync.notification.repository.NotificationRepository;
 import com.skillsync.notification.service.EmailService;
@@ -31,9 +32,9 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public NotificationResponse createNotificationWithEmail(Long userId, String type, String message, String toEmail) {
+    public NotificationResponse createNotificationWithEmail(Long userId, String type, String message, String toEmail, String subject) {
         NotificationResponse response = createNotification(userId, type, message);
-        emailService.sendNotificationEmail(toEmail, "[SkillSync] " + type.replace("_", " "), message);
+        emailService.sendNotificationEmail(toEmail, subject, message);
         return response;
     }
 
@@ -53,6 +54,9 @@ public class NotificationServiceImpl implements NotificationService {
     public NotificationResponse markAsRead(Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found with id: " + notificationId));
+        if (notification.isRead()) {
+            throw new NotificationAlreadyReadException("Notification " + notificationId + " is already marked as read");
+        }
         notification.setRead(true);
         return new NotificationResponse(notificationRepository.save(notification));
     }

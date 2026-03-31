@@ -4,7 +4,6 @@ import com.skillsync.notification.dto.NotificationResponse;
 import com.skillsync.notification.entity.Notification;
 import com.skillsync.notification.security.AuthEntryPoint;
 import com.skillsync.notification.security.CustomAccessDeniedHandler;
-import com.skillsync.notification.security.JwtAuthFilter;
 import com.skillsync.notification.security.SecurityConfig;
 import com.skillsync.notification.service.NotificationService;
 import org.junit.jupiter.api.Test;
@@ -13,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(NotificationController.class)
 @Import(SecurityConfig.class)
+@TestPropertySource(properties = "jwt.secret=01234567890123456789012345678901")
 class NotificationControllerTest {
 
     @Autowired
@@ -33,9 +34,6 @@ class NotificationControllerTest {
 
     @MockBean
     private NotificationService notificationService;
-
-    @MockBean
-    private JwtAuthFilter jwtAuthFilter;
 
     @MockBean
     private AuthEntryPoint authEntryPoint;

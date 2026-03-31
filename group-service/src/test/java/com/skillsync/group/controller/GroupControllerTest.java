@@ -9,7 +9,6 @@ import com.skillsync.group.entity.GroupMember;
 import com.skillsync.group.entity.LearningGroup;
 import com.skillsync.group.security.AuthEntryPoint;
 import com.skillsync.group.security.CustomAccessDeniedHandler;
-import com.skillsync.group.security.JwtAuthFilter;
 import com.skillsync.group.security.SecurityConfig;
 import com.skillsync.group.service.GroupService;
 import org.junit.jupiter.api.Test;
@@ -19,6 +18,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -35,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(GroupController.class)
 @Import(SecurityConfig.class)
+@TestPropertySource(properties = "jwt.secret=01234567890123456789012345678901")
 class GroupControllerTest {
 
     @Autowired
@@ -45,9 +46,6 @@ class GroupControllerTest {
 
     @MockBean
     private GroupService groupService;
-
-    @MockBean
-    private JwtAuthFilter jwtAuthFilter;
 
     @MockBean
     private AuthEntryPoint authEntryPoint;

@@ -6,7 +6,6 @@ import com.skillsync.skill.dto.SkillResponse;
 import com.skillsync.skill.entity.Skill;
 import com.skillsync.skill.security.AuthEntryPoint;
 import com.skillsync.skill.security.CustomAccessDeniedHandler;
-import com.skillsync.skill.security.JwtAuthFilter;
 import com.skillsync.skill.security.SecurityConfig;
 import com.skillsync.skill.service.SkillService;
 import org.junit.jupiter.api.Test;
@@ -16,11 +15,13 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -30,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(SkillController.class)
 @Import(SecurityConfig.class)
+@TestPropertySource(properties = "jwt.secret=01234567890123456789012345678901")
 class SkillControllerTest {
 
     @Autowired
@@ -40,9 +42,6 @@ class SkillControllerTest {
 
     @MockBean
     private SkillService skillService;
-
-    @MockBean
-    private JwtAuthFilter jwtAuthFilter;
 
     @MockBean
     private AuthEntryPoint authEntryPoint;
@@ -82,6 +81,12 @@ class SkillControllerTest {
     @Test
     @WithMockUser
     void createSkillForbiddenForNonAdmin() throws Exception {
+        doAnswer(invocation -> {
+            jakarta.servlet.http.HttpServletResponse response = invocation.getArgument(1);
+            response.setStatus(403);
+            return null;
+        }).when(accessDeniedHandler).handle(any(), any(), any());
+
         CreateSkillRequest request = new CreateSkillRequest();
         request.setName("Java");
 

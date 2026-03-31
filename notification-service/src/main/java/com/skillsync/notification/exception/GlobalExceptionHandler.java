@@ -35,6 +35,22 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.CONFLICT, "CONFLICT", ex.getMessage(), request);
     }
 
+    @ExceptionHandler(NotificationAlreadyReadException.class)
+    public ResponseEntity<ErrorResponse> handleAlreadyRead(NotificationAlreadyReadException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.CONFLICT, "NOTIFICATION_ALREADY_READ", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(InvalidEventException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidEvent(InvalidEventException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.UNPROCESSABLE_ENTITY, "INVALID_EVENT", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(EmailDeliveryException.class)
+    public ResponseEntity<ErrorResponse> handleEmailDelivery(EmailDeliveryException ex, HttpServletRequest request) {
+        log.error("Email delivery failed: {}", ex.getMessage());
+        return buildError(HttpStatus.SERVICE_UNAVAILABLE, "EMAIL_DELIVERY_FAILED", ex.getMessage(), request);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
         List<ErrorResponse.ValidationError> validationErrors = ex.getBindingResult().getFieldErrors().stream()

@@ -5,10 +5,10 @@ import com.skillsync.auth.entity.User;
 import com.skillsync.auth.exception.BadRequestException;
 import com.skillsync.auth.repository.RefreshTokenRepository;
 import com.skillsync.auth.repository.UserRepository;
+import com.skillsync.auth.service.impl.RefreshTokenServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import com.skillsync.auth.service.impl.RefreshTokenServiceImpl;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -30,13 +30,15 @@ class RefreshTokenServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @InjectMocks
     private RefreshTokenServiceImpl refreshTokenService;
+
+    @BeforeEach
+    void setUp() {
+        refreshTokenService = new RefreshTokenServiceImpl(60000L, refreshTokenRepository, userRepository);
+    }
 
     @Test
     void createRefreshTokenReusesExistingTokenRow() {
-        org.springframework.test.util.ReflectionTestUtils.setField(refreshTokenService, "refreshTokenExpiration", 60000L);
-
         User user = new User();
         user.setId(7L);
 

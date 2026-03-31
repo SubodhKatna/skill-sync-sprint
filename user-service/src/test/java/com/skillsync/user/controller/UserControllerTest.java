@@ -8,7 +8,6 @@ import com.skillsync.user.entity.UserSkill;
 import com.skillsync.user.exception.ResourceNotFoundException;
 import com.skillsync.user.security.AuthEntryPoint;
 import com.skillsync.user.security.CustomAccessDeniedHandler;
-import com.skillsync.user.security.JwtAuthFilter;
 import com.skillsync.user.security.SecurityConfig;
 import com.skillsync.user.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -19,6 +18,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.List;
 
@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(UserController.class)
 @Import(SecurityConfig.class)
+@TestPropertySource(properties = "jwt.secret=01234567890123456789012345678901")
 class UserControllerTest {
 
     @Autowired
@@ -42,9 +43,6 @@ class UserControllerTest {
 
     @MockBean
     private UserService userService;
-
-    @MockBean
-    private JwtAuthFilter jwtAuthFilter;
 
     @MockBean
     private AuthEntryPoint authEntryPoint;
